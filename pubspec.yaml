@@ -1,0 +1,77 @@
+name: workflow_mobile_client
+description: Flutter app for Banco workflow engine client
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # GraphQL
+  graphql: ^5.0.0
+  graphql_flutter: ^5.0.0
+
+  # State Management
+  provider: ^6.0.0
+  riverpod: ^2.4.0
+  flutter_riverpod: ^2.4.0
+
+  # Local Storage
+  hive: ^2.2.0
+  hive_flutter: ^1.1.0
+
+  # Firebase (Notifications)
+  firebase_core: ^3.15.2
+  firebase_messaging: ^15.2.10
+
+  # HTTP & Network
+  http: ^1.1.0
+  connectivity_plus: ^5.0.0
+
+  # UI & Navigation
+  go_router: ^10.0.0
+  flutter_localizations:
+    sdk: flutter
+
+  # Models & Serialization
+  json_annotation: ^4.8.0
+  freezed_annotation: ^2.4.0
+
+  # Logging & Debugging
+  logger: ^2.0.0
+  dio: ^5.3.0
+
+  # Date & Time
+  intl: 0.20.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+  # Code Generation
+  build_runner: ^2.4.0
+  json_serializable: ^6.7.0
+  freezed: ^2.4.0
+  hive_generator: ^2.0.0
+
+flutter:
+  uses-material-design: true
+
+  # Assets disabled - create these directories if needed
+  # assets:
+  #   - assets/images/
+  #   - assets/icons/
+  #   - assets/animations/
+
+  # Fonts disabled - using default Material fonts
+  # fonts:
+  #   - family: Roboto
+  #     fonts:
+  #       - asset: assets/fonts/Roboto-Regular.ttf
+  #       - asset: assets/fonts/Roboto-Bold.ttf
+  #         weight: 700
+  #       - asset: assets/fonts/Roboto-Light.ttf
+  #         weight: 300
