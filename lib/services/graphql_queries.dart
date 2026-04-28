@@ -38,6 +38,23 @@ const String getTasksQuery = r'''
   }
 ''';
 
+const String getTaskDetailQuery = r'''
+  query GetTaskDetail($taskId: String!) {
+    task(id: $taskId) {
+      id
+      processInstanceId
+      nodeId
+      nodeName
+      assignee
+      createdAt
+      dueDate
+      status
+      formData
+      requiredDocuments
+    }
+  }
+''';
+
 const String getProcessDetailQuery = r'''
   query GetProcessDetail($processId: String!) {
     process(id: $processId) {
@@ -78,6 +95,19 @@ const String completeTaskMutation = r'''
   }
 ''';
 
+const String rejectTaskMutation = r'''
+  mutation RejectTask($taskId: String!, $reason: String!) {
+    rejectTask(taskId: $taskId, reason: $reason) {
+      success
+      message
+      task {
+        id
+        status
+      }
+    }
+  }
+''';
+
 const String uploadDocumentMutation = r'''
   mutation UploadDocument($processId: String!, $fileName: String!, $fileBase64: String!, $mimeType: String!) {
     uploadDocument(input: {
@@ -113,6 +143,15 @@ const String getNotificationsQuery = r'''
   }
 ''';
 
+const String markAllNotificationsAsReadMutation = r'''
+  mutation MarkAllNotificationsAsRead($userId: String!) {
+    markAllNotificationsAsRead(userId: $userId) {
+      success
+      message
+    }
+  }
+''';
+
 const String markNotificationAsReadMutation = r'''
   mutation MarkAsRead($notificationId: String!) {
     markNotificationAsRead(id: $notificationId) {
@@ -134,6 +173,83 @@ const String getDocumentsQuery = r'''
       uploadedAt
       status
       rejectionReason
+    }
+  }
+''';
+
+const String getPublishedPoliciesQuery = r'''
+  query GetPublishedPolicies {
+    publishedPolicies {
+      id
+      name
+      version
+      status
+      description
+    }
+  }
+''';
+
+const String startProcessMutation = r'''
+  mutation StartProcess($input: JSON!) {
+    startProcess(input: $input) {
+      id
+      policyId
+      policyName
+      policyVersion
+      status
+      variables
+      initiatedAt
+      completedAt
+      history {
+        nodeId
+        nodeType
+        nodeName
+        status
+        timestamp
+        taskResult
+      }
+    }
+  }
+''';
+
+const String getCurrentUserQuery = r'''
+  query GetCurrentUser {
+    currentUser {
+      id
+      username
+      email
+      departamento
+      roles
+      active
+    }
+  }
+''';
+
+const String getUserStatisticsQuery = r'''
+  query GetUserStatistics($userId: String!) {
+    userStatistics(userId: $userId)
+  }
+''';
+
+const String getProcessHistoryQuery = r'''
+  query GetProcessHistory($userId: String!, $limit: Int) {
+    processHistory(userId: $userId, limit: $limit) {
+      id
+      policyId
+      policyName
+      policyVersion
+      status
+      variables
+      initiatedAt
+      completedAt
+      history {
+        nodeId
+        nodeType
+        nodeName
+        status
+        timestamp
+        taskResult
+      }
     }
   }
 ''';

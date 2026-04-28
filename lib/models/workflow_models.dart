@@ -163,15 +163,18 @@ class CachedTask extends HiveObject {
   late String nodeName;
 
   @HiveField(4)
-  late String status;
+  late String assignee;
 
   @HiveField(5)
-  late String formData; // JSON string
+  late String status;
 
   @HiveField(6)
-  late DateTime createdAt;
+  late String formData; // JSON string
 
   @HiveField(7)
+  late DateTime createdAt;
+
+  @HiveField(8)
   late DateTime syncedAt;
 
   CachedTask({
@@ -179,6 +182,7 @@ class CachedTask extends HiveObject {
     required this.processInstanceId,
     required this.nodeId,
     required this.nodeName,
+    required this.assignee,
     required this.status,
     required this.formData,
     required this.createdAt,

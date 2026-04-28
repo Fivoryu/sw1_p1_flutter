@@ -2,12 +2,16 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import '../config/app_config.dart';
 import '../screens/login_screen.dart';
+import '../screens/auth_assist_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/process_detail_screen.dart';
+import '../screens/process_documents_screen.dart';
+import '../screens/process_tracking_screen.dart';
 import '../screens/task_detail_screen.dart';
 import '../screens/notifications_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/history_screen.dart';
+import '../screens/new_process_screen.dart';
 
 class RouterConfig {
   static GoRouter createRouter() {
@@ -21,6 +25,11 @@ class RouterConfig {
           builder: (context, state) => const LoginScreen(),
         ),
         GoRoute(
+          path: '/auth-assist',
+          name: 'auth-assist',
+          builder: (context, state) => const AuthAssistScreen(),
+        ),
+        GoRoute(
           path: '/',
           name: 'home',
           builder: (context, state) => const HomeScreen(),
@@ -29,6 +38,20 @@ class RouterConfig {
           path: '/process/:id',
           name: 'process-detail',
           builder: (context, state) => ProcessDetailScreen(
+            processId: state.pathParameters['id']!,
+          ),
+        ),
+        GoRoute(
+          path: '/process/:id/tracking',
+          name: 'process-tracking',
+          builder: (context, state) => ProcessTrackingScreen(
+            processId: state.pathParameters['id']!,
+          ),
+        ),
+        GoRoute(
+          path: '/process/:id/documents',
+          name: 'process-documents',
+          builder: (context, state) => ProcessDocumentsScreen(
             processId: state.pathParameters['id']!,
           ),
         ),
@@ -53,6 +76,11 @@ class RouterConfig {
           path: '/profile',
           name: 'profile',
           builder: (context, state) => const ProfileScreen(),
+        ),
+        GoRoute(
+          path: '/new-process',
+          name: 'new-process',
+          builder: (context, state) => const NewProcessScreen(),
         ),
       ],
       errorBuilder: (context, state) => Scaffold(

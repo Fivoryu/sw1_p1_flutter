@@ -17,6 +17,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
+  Future<void> _refreshAll() async {
+    ref.invalidate(processesProvider);
+    ref.invalidate(tasksProvider);
+    ref.invalidate(notificationsProvider);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -37,7 +43,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mis Procesos'),
+        title: const Text('Workflow Cliente'),
         elevation: 0,
         actions: [
           Stack(
@@ -89,35 +95,60 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               // Tab 1: Procesos
               processesFuture.when(
                 data: (processes) {
-                  if (processes.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.inbox_outlined,
-                            size: 64,
-                            color: Colors.grey[300],
+                  return RefreshIndicator(
+                    onRefresh: _refreshAll,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+                      itemCount: processes.isEmpty ? 2 : processes.length + 1,
+                      itemBuilder: (context, index) {
+                        if (index == 0) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: Card(
+                              child: ListTile(
+                                leading: const Icon(Icons.add_circle_outline),
+                                title: const Text('Solicitar nuevo trámite'),
+                                subtitle: const Text('Inicia un proceso desde una política publicada'),
+                                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                                onTap: () => context.pushNamed('new-process'),
+                              ),
+                            ),
+                          );
+                        }
+                        if (processes.isEmpty) {
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 40),
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.inbox_outlined,
+                                    size: 64,
+                                    color: Colors.grey[300],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  const Text('No hay procesos en ejecución'),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    'Puedes iniciar uno nuevo desde arriba.',
+                                    style: Theme.of(context).textTheme.bodySmall,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }
+                        final process = processes[index - 1];
+                        return ProcessCard(
+                          process: process,
+                          onTap: () => context.pushNamed(
+                            'process-detail',
+                            pathParameters: {'id': process.id},
                           ),
-                          const SizedBox(height: 16),
-                          const Text('No hay procesos en ejecución'),
-                        ],
-                      ),
-                    );
-                  }
-                  return ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: processes.length,
-                    itemBuilder: (context, index) {
-                      final process = processes[index];
-                      return ProcessCard(
-                        process: process,
-                        onTap: () => context.pushNamed(
-                          'process-detail',
-                          pathParameters: {'id': process.id},
-                        ),
-                      );
-                    },
+                        );
+                      },
+                    ),
                   );
                 },
                 loading: () => const Center(
@@ -165,19 +196,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       ),
                     );
                   }
-                  return ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: tasks.length,
-                    itemBuilder: (context, index) {
-                      final task = tasks[index];
-                      return TaskCard(
-                        task: task,
-                        onTap: () => context.pushNamed(
-                          'task-detail',
-                          pathParameters: {'id': task.id},
-                        ),
-                      );
-                    },
+                  return RefreshIndicator(
+                    onRefresh: _refreshAll,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+                      itemCount: tasks.length,
+                      itemBuilder: (context, index) {
+                        final task = tasks[index];
+                        return TaskCard(
+                          task: task,
+                          onTap: () => context.pushNamed(
+                            'task-detail',
+                            pathParameters: {'id': task.id},
+                          ),
+                        );
+                      },
+                    ),
                   );
                 },
                 loading: () => const Center(
@@ -215,6 +249,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 final userId = ref.read(currentUserProvider);
                 ref.read(workflowControllerProvider.notifier)
                     .syncAllData(userId);
+                _refreshAll();
               },
               tooltip: 'Sincronizar',
               child: const Icon(Icons.refresh),

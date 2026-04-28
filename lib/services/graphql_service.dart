@@ -91,6 +91,30 @@ class GraphQLService {
     }
   }
 
+  /// Obtiene detalle de una tarea
+  Future<Task?> getTaskDetail(String taskId) async {
+    try {
+      final result = await _client.query(
+        QueryOptions(
+          document: gql(getTaskDetailQuery),
+          variables: {'taskId': taskId},
+          fetchPolicy: FetchPolicy.networkOnly,
+        ),
+      );
+
+      if (result.hasException) {
+        throw Exception(result.exception.toString());
+      }
+
+      final data = result.data?['task'];
+      if (data == null) return null;
+      return Task.fromJson(data as Map<String, dynamic>);
+    } catch (e) {
+      _logger.e('Error fetching task detail: $e');
+      rethrow;
+    }
+  }
+
   /// Obtiene detalles de un proceso específico
   Future<ProcessInstance?> getProcessDetail(String processId) async {
     try {
@@ -136,6 +160,26 @@ class GraphQLService {
       return success;
     } catch (e) {
       _logger.e('Error completing task: $e');
+      rethrow;
+    }
+  }
+
+  Future<bool> rejectTask(String taskId, String reason) async {
+    try {
+      final response = await _client.mutate(
+        MutationOptions(
+          document: gql(rejectTaskMutation),
+          variables: {'taskId': taskId, 'reason': reason},
+        ),
+      );
+
+      if (response.hasException) {
+        throw Exception(response.exception.toString());
+      }
+
+      return response.data?['rejectTask']?['success'] as bool? ?? false;
+    } catch (e) {
+      _logger.e('Error rejecting task: $e');
       rethrow;
     }
   }
@@ -219,6 +263,26 @@ class GraphQLService {
     }
   }
 
+  Future<bool> markAllNotificationsAsRead(String userId) async {
+    try {
+      final response = await _client.mutate(
+        MutationOptions(
+          document: gql(markAllNotificationsAsReadMutation),
+          variables: {'userId': userId},
+        ),
+      );
+
+      if (response.hasException) {
+        throw Exception(response.exception.toString());
+      }
+
+      return response.data?['markAllNotificationsAsRead']?['success'] as bool? ?? false;
+    } catch (e) {
+      _logger.e('Error marking all notifications as read: $e');
+      rethrow;
+    }
+  }
+
   /// Obtiene documentos de un proceso
   Future<List<DocumentUpload>> getDocuments(String processId) async {
     try {
@@ -239,6 +303,125 @@ class GraphQLService {
           .toList();
     } catch (e) {
       _logger.e('Error fetching documents: $e');
+      rethrow;
+    }
+  }
+
+  Future<List<Policy>> getPublishedPolicies() async {
+    try {
+      final result = await _client.query(
+        QueryOptions(
+          document: gql(getPublishedPoliciesQuery),
+          fetchPolicy: FetchPolicy.networkOnly,
+        ),
+      );
+
+      if (result.hasException) {
+        throw Exception(result.exception.toString());
+      }
+
+      final data = result.data?['publishedPolicies'] as List? ?? [];
+      return data.map((p) => Policy.fromJson(p as Map<String, dynamic>)).toList();
+    } catch (e) {
+      _logger.e('Error fetching published policies: $e');
+      rethrow;
+    }
+  }
+
+  Future<ProcessInstance> startProcess({
+    required String policyId,
+    required String clientId,
+    required Map<String, dynamic> variables,
+  }) async {
+    try {
+      final response = await _client.mutate(
+        MutationOptions(
+          document: gql(startProcessMutation),
+          variables: {
+            'input': {
+              'policyId': policyId,
+              'clientId': clientId,
+              'variables': variables,
+            },
+          },
+        ),
+      );
+
+      if (response.hasException) {
+        throw Exception(response.exception.toString());
+      }
+
+      final data = response.data?['startProcess'];
+      if (data == null) {
+        throw Exception('No se recibió proceso creado');
+      }
+
+      return ProcessInstance.fromJson(data as Map<String, dynamic>);
+    } catch (e) {
+      _logger.e('Error starting process: $e');
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>?> getCurrentUser() async {
+    try {
+      final result = await _client.query(
+        QueryOptions(
+          document: gql(getCurrentUserQuery),
+          fetchPolicy: FetchPolicy.networkOnly,
+        ),
+      );
+
+      if (result.hasException) {
+        throw Exception(result.exception.toString());
+      }
+
+      return result.data?['currentUser'] as Map<String, dynamic>?;
+    } catch (e) {
+      _logger.e('Error fetching current user: $e');
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> getUserStatistics(String userId) async {
+    try {
+      final result = await _client.query(
+        QueryOptions(
+          document: gql(getUserStatisticsQuery),
+          variables: {'userId': userId},
+          fetchPolicy: FetchPolicy.networkOnly,
+        ),
+      );
+
+      if (result.hasException) {
+        throw Exception(result.exception.toString());
+      }
+
+      return (result.data?['userStatistics'] as Map<String, dynamic>?) ?? {};
+    } catch (e) {
+      _logger.e('Error fetching user statistics: $e');
+      rethrow;
+    }
+  }
+
+  Future<List<ProcessInstance>> getProcessHistory(String userId, {int limit = 30}) async {
+    try {
+      final result = await _client.query(
+        QueryOptions(
+          document: gql(getProcessHistoryQuery),
+          variables: {'userId': userId, 'limit': limit},
+          fetchPolicy: FetchPolicy.networkOnly,
+        ),
+      );
+
+      if (result.hasException) {
+        throw Exception(result.exception.toString());
+      }
+
+      final data = result.data?['processHistory'] as List? ?? [];
+      return data.map((p) => ProcessInstance.fromJson(p as Map<String, dynamic>)).toList();
+    } catch (e) {
+      _logger.e('Error fetching process history: $e');
       rethrow;
     }
   }

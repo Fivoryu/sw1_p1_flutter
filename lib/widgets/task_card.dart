@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../models/workflow_models.dart';
 
 class TaskCard extends StatelessWidget {
@@ -45,6 +46,7 @@ class TaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final formatter = DateFormat('dd/MM/yyyy HH:mm');
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: ListTile(
@@ -68,7 +70,7 @@ class TaskCard extends StatelessWidget {
               style: const TextStyle(fontSize: 12),
             ),
             Text(
-              'Creado: ${task.createdAt.toString().split('.').first}',
+              'Creado: ${formatter.format(task.createdAt)}',
               style: const TextStyle(fontSize: 11, color: Colors.grey),
             ),
           ],

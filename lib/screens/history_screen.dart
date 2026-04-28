@@ -9,7 +9,7 @@ class HistoryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final processesFuture = ref.watch(processesProvider);
+    final processesFuture = ref.watch(historyProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -21,10 +21,9 @@ class HistoryScreen extends ConsumerWidget {
       ),
       body: processesFuture.when(
         data: (processes) {
-          // Filtrar procesos completados
-          final completedProcesses = processes
-              .where((p) => p.status == 'COMPLETED' || p.status == 'FAILED')
-              .toList();
+          final completedProcesses = [...processes]
+            ..sort((a, b) =>
+                (b.completedAt ?? b.initiatedAt).compareTo(a.completedAt ?? a.initiatedAt));
 
           if (completedProcesses.isEmpty) {
             return const Center(
@@ -40,7 +39,7 @@ class HistoryScreen extends ConsumerWidget {
           }
 
           return ListView.builder(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
             itemCount: completedProcesses.length,
             itemBuilder: (context, index) {
               final process = completedProcesses[index];

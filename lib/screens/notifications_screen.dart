@@ -14,6 +14,18 @@ class NotificationsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Notificaciones'),
+        actions: [
+          IconButton(
+            tooltip: 'Marcar todo como leído',
+            onPressed: () async {
+              final userId = ref.read(currentUserProvider);
+              if (userId.isEmpty) return;
+              await ref.read(workflowControllerProvider.notifier).markAllNotificationsAsRead(userId);
+              ref.invalidate(notificationsProvider);
+            },
+            icon: const Icon(Icons.done_all),
+          ),
+        ],
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
@@ -65,6 +77,7 @@ class NotificationsScreen extends ConsumerWidget {
                     ref
                         .read(workflowControllerProvider.notifier)
                         .markNotificationAsRead(notification.id);
+                    ref.invalidate(notificationsProvider);
                   },
                 ),
               );

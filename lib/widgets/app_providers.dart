@@ -47,6 +47,10 @@ final processesProvider = FutureProvider<List<ProcessInstance>>((ref) async {
   final graphQL = ref.watch(graphQLServiceProvider);
   final localStorage = ref.watch(localStorageProvider);
 
+  if (userId.isEmpty) {
+    return localStorage.getCachedProcesses();
+  }
+
   try {
     final processes = await graphQL.getProcesses(userId);
     await localStorage.saveProceses(processes);
@@ -77,6 +81,10 @@ final tasksProvider = FutureProvider<List<Task>>((ref) async {
   final graphQL = ref.watch(graphQLServiceProvider);
   final localStorage = ref.watch(localStorageProvider);
 
+  if (username.isEmpty) {
+    return localStorage.getCachedTasks();
+  }
+
   try {
     final tasks = await graphQL.getTasks(username);
     await localStorage.saveTasks(tasks);
@@ -88,8 +96,14 @@ final tasksProvider = FutureProvider<List<Task>>((ref) async {
 });
 
 final taskDetailProvider = FutureProvider.family<Task?, String>((ref, taskId) async {
+  final graphQL = ref.watch(graphQLServiceProvider);
   final localStorage = ref.watch(localStorageProvider);
-  return localStorage.getCachedTask(taskId);
+
+  try {
+    return await graphQL.getTaskDetail(taskId);
+  } catch (_) {
+    return localStorage.getCachedTask(taskId);
+  }
 });
 
 // ============ Notifications ============
@@ -98,6 +112,10 @@ final notificationsProvider = FutureProvider<List<NotificationModel>>((ref) asyn
   final userId = ref.watch(currentUserProvider);
   final graphQL = ref.watch(graphQLServiceProvider);
   final localStorage = ref.watch(localStorageProvider);
+
+  if (userId.isEmpty) {
+    return localStorage.getCachedNotifications();
+  }
 
   try {
     final notifications = await graphQL.getNotifications(userId);
@@ -126,6 +144,46 @@ final documentsProvider =
   return await graphQL.getDocuments(processId);
 });
 
+final publishedPoliciesProvider = FutureProvider<List<Policy>>((ref) async {
+  final graphQL = ref.watch(graphQLServiceProvider);
+  return graphQL.getPublishedPolicies();
+});
+
+final historyProvider = FutureProvider<List<ProcessInstance>>((ref) async {
+  final userId = ref.watch(currentUserProvider);
+  final localStorage = ref.watch(localStorageProvider);
+  if (userId.isEmpty) {
+    return localStorage
+        .getCachedProcesses()
+        .where((p) => p.status == 'COMPLETED' || p.status == 'FAILED')
+        .toList();
+  }
+
+  final graphQL = ref.watch(graphQLServiceProvider);
+
+  try {
+    final history = await graphQL.getProcessHistory(userId);
+    await localStorage.saveProceses(history);
+    return history;
+  } catch (_) {
+    return localStorage
+        .getCachedProcesses()
+        .where((p) => p.status == 'COMPLETED' || p.status == 'FAILED')
+        .toList();
+  }
+});
+
+final currentUserProfileProvider = FutureProvider<Map<String, dynamic>?>((ref) async {
+  final graphQL = ref.watch(graphQLServiceProvider);
+  return graphQL.getCurrentUser();
+});
+
+final userStatsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+  final userId = ref.watch(currentUserProvider);
+  final graphQL = ref.watch(graphQLServiceProvider);
+  return graphQL.getUserStatistics(userId);
+});
+
 // ============ Workflow Controller ============
 
 class WorkflowController extends StateNotifier<AsyncValue<void>> {
@@ -141,6 +199,19 @@ class WorkflowController extends StateNotifier<AsyncValue<void>> {
       final success = await _graphQL.completeTask(taskId, result);
       if (success) {
         await _localStorage.updateTaskStatus(taskId, 'COMPLETED');
+      }
+      state = const AsyncValue.data(null);
+    } catch (e) {
+      state = AsyncValue.error(e, StackTrace.current);
+    }
+  }
+
+  Future<void> rejectTask(String taskId, String reason) async {
+    state = const AsyncValue.loading();
+    try {
+      final success = await _graphQL.rejectTask(taskId, reason);
+      if (success) {
+        await _localStorage.updateTaskStatus(taskId, 'REJECTED');
       }
       state = const AsyncValue.data(null);
     } catch (e) {
@@ -172,23 +243,61 @@ class WorkflowController extends StateNotifier<AsyncValue<void>> {
 
   Future<void> markNotificationAsRead(String notificationId) async {
     try {
-      await _graphQL.markNotificationAsRead(notificationId);
+      final success = await _graphQL.markNotificationAsRead(notificationId);
+      if (success) {
+        await _localStorage.markNotificationAsRead(notificationId);
+      }
     } catch (e) {
       // Log error but don't fail
+    }
+  }
+
+  Future<void> markAllNotificationsAsRead(String userId) async {
+    state = const AsyncValue.loading();
+    try {
+      await _graphQL.markAllNotificationsAsRead(userId);
+      final cached = _localStorage.getCachedNotifications();
+      for (final notification in cached.where((n) => !n.read)) {
+        await _localStorage.markNotificationAsRead(notification.id);
+      }
+      state = const AsyncValue.data(null);
+    } catch (e) {
+      state = AsyncValue.error(e, StackTrace.current);
     }
   }
 
   Future<void> syncAllData(String userId) async {
     state = const AsyncValue.loading();
     try {
+      final username = _localStorage.getStoredUsername() ?? '';
       await Future.wait([
         _graphQL.getProcesses(userId).then(_localStorage.saveProceses),
-        _graphQL.getTasks(userId).then(_localStorage.saveTasks),
+        if (username.isNotEmpty) _graphQL.getTasks(username).then(_localStorage.saveTasks),
         _graphQL.getNotifications(userId).then(_localStorage.saveNotifications),
       ]);
       state = const AsyncValue.data(null);
     } catch (e) {
       state = AsyncValue.error(e, StackTrace.current);
+    }
+  }
+
+  Future<ProcessInstance> startProcess({
+    required String policyId,
+    required String userId,
+    required Map<String, dynamic> variables,
+  }) async {
+    state = const AsyncValue.loading();
+    try {
+      final process = await _graphQL.startProcess(
+        policyId: policyId,
+        clientId: userId,
+        variables: variables,
+      );
+      state = const AsyncValue.data(null);
+      return process;
+    } catch (e) {
+      state = AsyncValue.error(e, StackTrace.current);
+      rethrow;
     }
   }
 }

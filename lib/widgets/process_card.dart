@@ -55,7 +55,7 @@ class ProcessCard extends StatelessWidget {
           children: [
             const SizedBox(height: 4),
             Text(
-              'ID: ${process.id.substring(0, 8)}...',
+              'ID: ${process.id.length > 8 ? '${process.id.substring(0, 8)}...' : process.id}',
               style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
             const SizedBox(height: 4),

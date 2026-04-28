@@ -9,6 +9,9 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userId = ref.watch(userIdProvider);
+    final username = ref.watch(usernameProvider);
+    final profileState = ref.watch(currentUserProfileProvider);
+    final statsState = ref.watch(userStatsProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -39,20 +42,41 @@ class ProfileScreen extends ConsumerWidget {
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Información de Usuario',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 16),
-                    _buildProfileField('ID de Usuario', userId ?? 'No asignado'),
-                    _buildProfileField('Email', 'usuario@banco.com'),
-                    _buildProfileField('Departamento', 'Operaciones'),
-                    _buildProfileField('Rol', 'Oficial de Crédito'),
-                    _buildProfileField('Estado', 'Activo'),
-                  ],
+                child: profileState.when(
+                  data: (profile) {
+                    final roles = (profile?['roles'] as List?)?.join(', ') ?? 'Cliente';
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Información de Usuario',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildProfileField('Usuario', username ?? 'No asignado'),
+                        _buildProfileField('ID de Usuario', userId ?? 'No asignado'),
+                        _buildProfileField('Email', profile?['email']?.toString() ?? 'No disponible'),
+                        _buildProfileField('Departamento', profile?['departamento']?.toString() ?? 'N/A'),
+                        _buildProfileField('Roles', roles),
+                        _buildProfileField(
+                          'Estado',
+                          (profile?['active'] == true) ? 'Activo' : 'No disponible',
+                        ),
+                      ],
+                    );
+                  },
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (_, __) => Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Información de Usuario',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 12),
+                      const Text('No se pudo cargar el perfil remoto.'),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -60,30 +84,39 @@ class ProfileScreen extends ConsumerWidget {
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Estadísticas',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
+                child: statsState.when(
+                  data: (stats) {
+                    final completedTasks = stats['completedTasks']?.toString() ?? '--';
+                    final activeProcesses = stats['activeProcesses']?.toString() ?? '--';
+                    final totalDocuments = stats['documentsUploaded']?.toString() ?? '--';
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: _buildStatTile('Tareas\nCompletadas', '24'),
+                        Text(
+                          'Estadísticas',
+                          style: Theme.of(context).textTheme.titleMedium,
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildStatTile('Procesos\nActivos', '3'),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildStatTile('Documentos\nCargados', '15'),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildStatTile('Tareas\nCompletadas', completedTasks),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildStatTile('Procesos\nActivos', activeProcesses),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildStatTile('Documentos\nCargados', totalDocuments),
+                            ),
+                          ],
                         ),
                       ],
-                    ),
-                  ],
+                    );
+                  },
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (_, __) => const Text('No se pudieron cargar estadísticas'),
                 ),
               ),
             ),
@@ -99,29 +132,23 @@ class ProfileScreen extends ConsumerWidget {
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 16),
-                    SwitchListTile(
-                      title: const Text('Notificaciones push'),
-                      subtitle: const Text('Recibir alertas de nuevas tareas'),
-                      value: true,
-                      onChanged: (value) {
-                        // TODO: Guardar preferencia
-                      },
+                    const ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(Icons.notifications_active_outlined),
+                      title: Text('Notificaciones push'),
+                      subtitle: Text('Habilitadas en plataforma móvil nativa'),
                     ),
-                    SwitchListTile(
-                      title: const Text('Sincronización automática'),
-                      subtitle: const Text('Sincronizar datos cada 5 minutos'),
-                      value: true,
-                      onChanged: (value) {
-                        // TODO: Guardar preferencia
-                      },
+                    const ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(Icons.sync_outlined),
+                      title: Text('Sincronización'),
+                      subtitle: Text('Puedes forzar sincronización desde la pantalla principal'),
                     ),
-                    SwitchListTile(
-                      title: const Text('Modo oscuro'),
-                      subtitle: const Text('Usar tema oscuro'),
-                      value: false,
-                      onChanged: (value) {
-                        // TODO: Cambiar tema
-                      },
+                    const ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(Icons.dark_mode_outlined),
+                      title: Text('Tema'),
+                      subtitle: Text('Actualmente se usa el modo del sistema'),
                     ),
                   ],
                 ),
@@ -131,13 +158,25 @@ class ProfileScreen extends ConsumerWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () {
-                  ref.read(authControllerProvider.notifier).logout();
-                  context.go('/');
+                onPressed: () async {
+                  await ref.read(authControllerProvider.notifier).logout();
+                  if (context.mounted) context.go('/login');
                 },
                 icon: const Icon(Icons.logout),
                 label: const Text('Cerrar Sesión'),
               ),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('CU-22 Registro y CU-03 Recuperación pendientes de endpoint backend'),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.info_outline),
+              label: const Text('Registro / Recuperación'),
             ),
           ],
         ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../widgets/app_providers.dart';
 
 class ProcessDetailScreen extends ConsumerWidget {
@@ -14,13 +15,20 @@ class ProcessDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final processFuture = ref.watch(processDetailProvider(processId));
+    final formatter = DateFormat('dd/MM/yyyy HH:mm');
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Detalle del Proceso'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/');
+            }
+          },
         ),
       ),
       body: processFuture.when(
@@ -46,14 +54,46 @@ class ProcessDetailScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 16),
                         _buildInfoRow('ID:', process.id),
-                        _buildInfoRow('Estado:', process.status),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Estado:', style: TextStyle(fontWeight: FontWeight.bold)),
+                            Chip(label: Text(process.status)),
+                          ],
+                        ),
                         _buildInfoRow('Versión:', process.policyVersion.toString()),
-                        _buildInfoRow('Iniciado:', process.initiatedAt.toString()),
+                        _buildInfoRow('Iniciado:', formatter.format(process.initiatedAt)),
                         if (process.completedAt != null)
-                          _buildInfoRow('Completado:', process.completedAt.toString()),
+                          _buildInfoRow('Completado:', formatter.format(process.completedAt!)),
                       ],
                     ),
                   ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: () => context.pushNamed(
+                          'process-tracking',
+                          pathParameters: {'id': process.id},
+                        ),
+                        icon: const Icon(Icons.timeline),
+                        label: const Text('Ver seguimiento'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => context.pushNamed(
+                          'process-documents',
+                          pathParameters: {'id': process.id},
+                        ),
+                        icon: const Icon(Icons.attach_file),
+                        label: const Text('Documentos'),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 24),
                 Text(
@@ -71,7 +111,7 @@ class ProcessDetailScreen extends ConsumerWidget {
                       child: ListTile(
                         title: Text(event.nodeName),
                         subtitle: Text(event.status),
-                        trailing: Text(event.timestamp.toString()),
+                        trailing: Text(formatter.format(event.timestamp)),
                       ),
                     );
                   },

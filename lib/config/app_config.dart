@@ -39,7 +39,7 @@ class AppConfig {
   static const String developmentGraphQLUrl = 'http://localhost:8080/api/graphql';
   
   static const String productionApiUrl = 'https://api.banco.com';
-  static const String productionGraphQLUrl = 'https://api.banco.com/graphql';
+  static const String productionGraphQLUrl = 'https://api.banco.com/api/graphql';
 
   // Timeouts
   static const Duration apiTimeout = Duration(seconds: 30);

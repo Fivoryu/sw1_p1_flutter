@@ -76,17 +76,18 @@ class CachedTaskAdapter extends TypeAdapter<CachedTask> {
       processInstanceId: fields[1] as String,
       nodeId: fields[2] as String,
       nodeName: fields[3] as String,
-      status: fields[4] as String,
-      formData: fields[5] as String,
-      createdAt: fields[6] as DateTime,
-      syncedAt: fields[7] as DateTime,
+      assignee: (fields[4] as String?) ?? '',
+      status: (fields[5] as String?) ?? ((fields[4] as String?) ?? 'PENDING'),
+      formData: (fields[6] as String?) ?? ((fields[5] as String?) ?? '{}'),
+      createdAt: (fields[7] as DateTime?) ?? DateTime.now(),
+      syncedAt: (fields[8] as DateTime?) ?? DateTime.now(),
     );
   }
 
   @override
   void write(BinaryWriter writer, CachedTask obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(9)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -96,12 +97,14 @@ class CachedTaskAdapter extends TypeAdapter<CachedTask> {
       ..writeByte(3)
       ..write(obj.nodeName)
       ..writeByte(4)
-      ..write(obj.status)
+      ..write(obj.assignee)
       ..writeByte(5)
-      ..write(obj.formData)
+      ..write(obj.status)
       ..writeByte(6)
-      ..write(obj.createdAt)
+      ..write(obj.formData)
       ..writeByte(7)
+      ..write(obj.createdAt)
+      ..writeByte(8)
       ..write(obj.syncedAt);
   }
 
@@ -203,9 +206,9 @@ Map<String, dynamic> _$$ProcessInstanceImplToJson(
 
 _$HistoryEntryImpl _$$HistoryEntryImplFromJson(Map<String, dynamic> json) =>
     _$HistoryEntryImpl(
-      nodeId: json['nodeId'] as String,
-      nodeType: json['nodeType'] as String,
-      nodeName: json['nodeName'] as String,
+      nodeId: (json['nodeId'] as String?) ?? '',
+      nodeType: (json['nodeType'] as String?) ?? '',
+      nodeName: (json['nodeName'] as String?) ?? '',
       status: json['status'] as String,
       timestamp: DateTime.parse(json['timestamp'] as String),
       taskResult: json['taskResult'] as Map<String, dynamic>?,
@@ -232,7 +235,7 @@ _$TaskImpl _$$TaskImplFromJson(Map<String, dynamic> json) => _$TaskImpl(
           ? null
           : DateTime.parse(json['dueDate'] as String),
       status: json['status'] as String,
-      formData: json['formData'] as Map<String, dynamic>,
+      formData: (json['formData'] as Map<String, dynamic>?) ?? <String, dynamic>{},
       requiredDocuments: (json['requiredDocuments'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList(),
@@ -278,9 +281,9 @@ _$DocumentUploadImpl _$$DocumentUploadImplFromJson(Map<String, dynamic> json) =>
       id: json['id'] as String,
       processInstanceId: json['processInstanceId'] as String,
       fileName: json['fileName'] as String,
-      fileType: json['fileType'] as String,
-      fileSize: (json['fileSize'] as num).toInt(),
-      mimeType: json['mimeType'] as String,
+      fileType: (json['fileType'] as String?) ?? '',
+      fileSize: (json['fileSize'] as num?)?.toInt() ?? 0,
+      mimeType: (json['mimeType'] as String?) ?? 'application/octet-stream',
       uploadedAt: DateTime.parse(json['uploadedAt'] as String),
       status: json['status'] as String,
       rejectionReason: json['rejectionReason'] as String?,
@@ -308,7 +311,7 @@ _$NotificationModelImpl _$$NotificationModelImplFromJson(
       title: json['title'] as String,
       body: json['body'] as String,
       type: json['type'] as String,
-      relatedId: json['relatedId'] as String,
+      relatedId: (json['relatedId'] as String?) ?? '',
       createdAt: DateTime.parse(json['createdAt'] as String),
       read: json['read'] as bool,
     );
