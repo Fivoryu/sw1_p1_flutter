@@ -6,6 +6,16 @@ import '../services/local_storage_service.dart';
 late LocalStorageService _localStorageService;
 
 class AppConfig {
+  static const String apiBaseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://localhost:8080',
+  );
+
+  static const String graphQLUrl = String.fromEnvironment(
+    'GRAPHQL_URL',
+    defaultValue: 'http://localhost:8080/api/graphql',
+  );
+
   static Future<void> init() async {
     print('AppConfig: Starting initialization...');
     
@@ -35,12 +45,6 @@ class AppConfig {
   static LocalStorageService get localStorage => _localStorageService;
 
   // Configuraciones según ambiente
-  static const String developmentApiUrl = 'http://localhost:8080';
-  static const String developmentGraphQLUrl = 'http://localhost:8080/api/graphql';
-  
-  static const String productionApiUrl = 'https://api.banco.com';
-  static const String productionGraphQLUrl = 'https://api.banco.com/api/graphql';
-
   // Timeouts
   static const Duration apiTimeout = Duration(seconds: 30);
   static const Duration graphQLTimeout = Duration(seconds: 30);

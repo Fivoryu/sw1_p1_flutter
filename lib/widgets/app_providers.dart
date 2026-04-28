@@ -10,7 +10,7 @@ import '../config/app_config.dart';
 
 final graphQLServiceProvider = Provider((ref) {
   final token = ref.watch(authTokenProvider);
-  return GraphQLService(apiUrl: AppConfig.developmentGraphQLUrl, authToken: token);
+  return GraphQLService(apiUrl: AppConfig.graphQLUrl, authToken: token);
 });
 
 final localStorageProvider = Provider((ref) {
@@ -19,7 +19,7 @@ final localStorageProvider = Provider((ref) {
 });
 
 final authServiceProvider = Provider((ref) {
-  return AuthService(baseUrl: AppConfig.developmentApiUrl);
+  return AuthService(baseUrl: AppConfig.apiBaseUrl);
 });
 
 final notificationServiceProvider = Provider((ref) {
